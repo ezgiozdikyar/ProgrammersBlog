@@ -29,20 +29,22 @@ namespace Blog.Services.Concrete
                 CreatedDate = DateTime.Now,
                 ModifiedDate = DateTime.Now,
                 IsDeleted = false
-            });
-            await _unitOfWork.SaveAsync();
+            }).ContinueWith(t => _unitOfWork.SaveAsync());
             return new Result(ResultStatus.Success, $"{categoryAddDto.Name} adlı kategori başarıyla eklendi.");
         }
 
-        public async Task<Shared.Utilities.Results.Abstract.IResult> Delete(int categoryId)
+        public async Task<Shared.Utilities.Results.Abstract.IResult> Delete(int categoryId, string modifiedByName)
         {
             var category = await _unitOfWork.Categories.GetAsync(c => c.Id == categoryId);
             if (category != null)
             {
-               await _unitOfWork.Categories.DeleteAsync(category).ContinueWith(t => _unitOfWork.SaveAsync());
-                return new Result(ResultStatus.Success, $"{category.Name} kategorisi başarıyla silindi.");
+               category.IsDeleted = true;
+                category.ModifiedByName = modifiedByName;
+                category.ModifiedDate = DateTime.Now;
+                await _unitOfWork.Categories.UpdateAsync(category).ContinueWith(t => _unitOfWork.SaveAsync());
+                return new Result(ResultStatus.Success, $"{category.Name} adlı kategori başarıyla silindi.");
             }
-            return new Result(ResultStatus.Error, "Böyle bir kategori bulunamadı!");
+            return new Result(ResultStatus.Error, $"{category.Name} adlı kategori bulunamadı.");
         }
 
         public async Task<IDataResult<Category>> Get(int categoryId)
@@ -65,18 +67,28 @@ namespace Blog.Services.Concrete
             return new DataResult<IList<Category>>(ResultStatus.Error, null, "Hiçbir kategori bulunamadı.");
         }
 
-        public Task<Shared.Utilities.Results.Abstract.IResult> HardDelete(int categoryId)
+        public async Task<Shared.Utilities.Results.Abstract.IResult> HardDelete(int categoryId)
         {
-            throw new NotImplementedException();
+            var category = await _unitOfWork.Categories.GetAsync(c => c.Id == categoryId);
+            if(category != null)
+            {
+                await _unitOfWork.Categories.DeleteAsync(category).ContinueWith(t => _unitOfWork.SaveAsync());
+                return new Result(ResultStatus.Success, $"{category.Name} isimli kategori veri tabanından başarıyla silindi.");
+            }
+            return new Result(ResultStatus.Error, $"{category.Name} isimli kategori bulunamadı.");
         }
 
-        public async Task<Shared.Utilities.Results.Abstract.IResult> Update(CategoryUpdateDto categoryUpdateDto)
+        public async Task<Shared.Utilities.Results.Abstract.IResult> Update(CategoryUpdateDto categoryUpdateDto, string modifiedByName)
         {
             var category = await _unitOfWork.Categories.GetAsync(c => c.Id == categoryUpdateDto.Id);
             if(category != null)
             {
                 category.Name = categoryUpdateDto.Name;
                 category.Description = categoryUpdateDto.Description;
+                category.IsActive = categoryUpdateDto.IsActive;
+                category.IsDeleted = categoryUpdateDto.IsDeleted;
+                category.ModifiedByName = modifiedByName;
+                category.ModifiedDate = DateTime.Now;
                 await _unitOfWork.Categories.UpdateAsync(category).ContinueWith(t => _unitOfWork.SaveAsync());
                 return new Result(ResultStatus.Success, $"{categoryUpdateDto.Name} kategorisi başarıyla güncellendi.");
             }

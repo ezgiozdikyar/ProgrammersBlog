@@ -10,8 +10,8 @@ namespace Blog.Services.Abstract
         Task<IDataResult<IList<Category>>> GetAll();
         Task<IDataResult<IList<Category>>> GetAllByNonDeleted();
         Task<Shared.Utilities.Results.Abstract.IResult> Add(CategoryAddDto categoryAddDto, string createdByName);
-        Task<Shared.Utilities.Results.Abstract.IResult> Update(CategoryUpdateDto categoryUpdateDto);
-        Task<Shared.Utilities.Results.Abstract.IResult> Delete(int categoryId);
+        Task<Shared.Utilities.Results.Abstract.IResult> Update(CategoryUpdateDto categoryUpdateDto, string modifiedByName);
+        Task<Shared.Utilities.Results.Abstract.IResult> Delete(int categoryId, string modifiedByName);
         Task<Shared.Utilities.Results.Abstract.IResult> HardDelete(int categoryId);
     }
 }
